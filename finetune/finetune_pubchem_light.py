@@ -508,26 +508,26 @@ def append_to_file(filename, line):
 
 def main():
     margs = args.parse_args()
-
-    margs.device = "mps"
-    margs.n_head  = 12
-    margs.n_layer = 12
-    margs.n_embd= 768
-    margs.d_dropout= 0.1
-    margs.dropout= 0.1
-    margs.lr_start= 3e-5
-    margs.num_workers= 2
-    margs.max_epochs= 2  #500
-    margs.num_feats= 32 #\
-    margs.seed_path='./data/Pretrained MoLFormer/checkpoints/N-Step-Checkpoint_3_30000.ckpt'
-    margs.dataset_name="bbbp"
-    margs.data_root="./data/bbbp"
-    margs.measure_name="p_np"
-    margs.dims=[768, 768, 768, 1]
-    margs.checkpoints_folder='./checkpoints_bbbp'
-    margs.num_classes=2
-    margs.train_dataset_length = 5
-    margs.eval_dataset_length = 5
+    if not torch.cuda.is_available():
+        margs.device = "mps"
+        margs.n_head  = 12
+        margs.n_layer = 12
+        margs.n_embd= 768
+        margs.d_dropout= 0.1
+        margs.dropout= 0.1
+        margs.lr_start= 3e-5
+        margs.num_workers= 2
+        margs.max_epochs= 2  #500
+        margs.num_feats= 32 #\
+        margs.seed_path='./data/Pretrained MoLFormer/checkpoints/N-Step-Checkpoint_3_30000.ckpt'
+        margs.dataset_name="bbbp"
+        margs.data_root="./data/bbbp"
+        margs.measure_name="p_np"
+        margs.dims=[768, 768, 768, 1]
+        margs.checkpoints_folder='./checkpoints_bbbp'
+        margs.num_classes=2
+        margs.train_dataset_length = 5
+        margs.eval_dataset_length = 5
 
 
     print("Using " + str(
