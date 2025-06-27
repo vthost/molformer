@@ -81,7 +81,7 @@ class MultitaskModel(pl.LightningModule):
 
         self.fcs = []  # nn.ModuleList()
         # self.dropout = nn.Dropout(p=dropout)
-        self.loss = torch.nn.BCELoss()
+        self.loss = torch.nn.BCELoss()  # VT only difference to non-multitask version, uses CE
 
         self.net = self.Net(
             config.n_embd, self.hparams.num_tasks, dims=config.dims, dropout=config.dropout,
@@ -398,11 +398,11 @@ def get_dataset(data_root, filename,  dataset_len,  measure_names):
     if dataset_len:
         df = df.head(dataset_len)
         print("Warning entire dataset not used:", len(df))
-    dataset = MultitaskEmbeddingDataset(df,  measure_names)
+    dataset = MultitaskEmbeddingDataset(df,  measure_names)  # VT same as other just here other gets aug as add argument, which is not used in code...
     return dataset
 
 class MultitaskEmbeddingDataset(torch.utils.data.Dataset):
-    def __init__(self, df,  measure_names):
+    def __init__(self, df,  measure_names):  # VT binary has a step where it drops rows where any na (ie not just in smi col as here)
         self.measure_names = measure_names
         df['canonical_smiles'] = df['smiles'].apply(lambda smi: normalize_smiles(smi, canonical=True, isomeric=False))
         df_good = df.dropna(subset=['canonical_smiles'])  # TODO - Check why some rows are na
@@ -413,7 +413,7 @@ class MultitaskEmbeddingDataset(torch.utils.data.Dataset):
 
         self.df = self.df.reset_index(drop=True)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index):  # VT binary one has not the mask
 
         canonical_smiles = self.df.loc[index, 'canonical_smiles']
         measures = self.df.loc[index, self.measure_names].to_numpy()
@@ -424,7 +424,7 @@ class MultitaskEmbeddingDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.df)
 
-class PropertyPredictionDataModule(pl.LightningDataModule):
+class PropertyPredictionDataModule(pl.LightningDataModule):  # VT same as in binary only once they use aug param in train set construction but seems not to be used here
     def __init__(self, hparams):
         super(PropertyPredictionDataModule, self).__init__()
         if type(hparams) is dict:
@@ -506,7 +506,7 @@ class PropertyPredictionDataModule(pl.LightningDataModule):
 
 
 
-class CheckpointEveryNSteps(pl.Callback):
+class CheckpointEveryNSteps(pl.Callback):  # VT  very same
     """
         Save a checkpoint every N steps, instead of Lightning's default that checkpoints
         based on validation loss.

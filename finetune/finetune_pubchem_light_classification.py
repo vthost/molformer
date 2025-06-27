@@ -372,7 +372,7 @@ class PropertyPredictionDataset(torch.utils.data.Dataset):
         df = df.dropna()
         self.measure_name = measure_name
         df['canonical_smiles'] = df['smiles'].apply(lambda smi: normalize_smiles(smi, canonical=True, isomeric=False))
-        df_good = df.dropna(subset=['canonical_smiles'])  # TODO - Check why some rows are na
+        df_good = df.dropna(subset=['canonical_smiles'])  # TODO - Check why some rows are na # VT (it's their todo) did they still have na and therefore add this (even though drop already above??) maybe it's canonicalization>
         
         len_new = len(df_good)
         print('Dropped {} invalid smiles'.format(len(df) - len_new))

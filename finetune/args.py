@@ -75,7 +75,7 @@ def get_parser(parser=None):
     parser.add_argument("--desc_skip_connection", type=bool, default=False, required=False)
     parser.add_argument("--num_workers", type=int, default=8, required=False)
     parser.add_argument("--dropout", type=float, default=0.1, required=False)
-    parser.add_argument("--dims", type=int, nargs="*", default="[]", required=False)
+    parser.add_argument("--dims", type=int, nargs="*", default=0, required=False)
     parser.add_argument(
         "--smiles_embedding",
         type=str,
@@ -86,7 +86,7 @@ def get_parser(parser=None):
     parser.add_argument("--num_classes", type=int, required=False)
     parser.add_argument("--dataset_name", type=str, required=False, default="sol")
     parser.add_argument("--measure_name", type=str, required=False, default="measure")
-    parser.add_argument("--checkpoints_folder", type=str, required=True)
+    parser.add_argument("--checkpoints_folder", type=str, required=False)
     parser.add_argument("--checkpoint_root", type=str, required=False)
 
     parser.add_argument(

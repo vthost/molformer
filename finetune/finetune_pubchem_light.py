@@ -14,15 +14,17 @@ from fast_transformers.masking import LengthMask as LM
 from rotate_attention.rotate_builder import RotateEncoderBuilder as rotate_builder
 from fast_transformers.feature_maps import GeneralizedRandomFeatures
 from functools import partial
-from apex import optimizers
+# from apex import optimizers
 import subprocess
 from argparse import ArgumentParser, Namespace
 import numpy as np
 import pandas as pd
+from torch.optim import AdamW
 from scipy.stats import pearsonr
 from torch.utils.data import DataLoader
 from sklearn.metrics import r2_score
 from utils import normalize_smiles
+
 
 # create a function (this my favorite choice)
 def RMSELoss(yhat,y):
@@ -136,7 +138,8 @@ class LightningModule(pl.LightningModule):
         #save RNG states each time the model and states are saved
         out_dict = dict()
         out_dict['torch_state']=torch.get_rng_state()
-        out_dict['cuda_state']=torch.cuda.get_rng_state()
+        if torch.cuda.is_available():
+            out_dict['cuda_state']=torch.cuda.get_rng_state()
         if np:
             out_dict['numpy_state']=np.random.get_state()
         if random:
@@ -211,7 +214,8 @@ class LightningModule(pl.LightningModule):
             betas = (0.9, 0.99)
         print('betas are {}'.format(betas))
         learning_rate = self.train_config.lr_start * self.train_config.lr_multiplier
-        optimizer = optimizers.FusedLAMB(optim_groups, lr=learning_rate, betas=betas)
+        # optimizer = optimizers.FusedLAMB(optim_groups, lr=learning_rate, betas=betas)
+        optimizer = AdamW(optim_groups, lr=learning_rate, betas=betas)
         return optimizer
 
     def training_step(self, batch, batch_idx):
@@ -381,7 +385,7 @@ class PropertyPredictionDataModule(pl.LightningDataModule):
         self.dataset_name = hparams.dataset_name
 
     def get_split_dataset_filename(dataset_name, split):
-        return dataset_name + "_" + split + ".csv"
+        return split + ".csv"  # dataset_name + "_" +
 
     def prepare_data(self):
         print("Inside prepare_dataset")
@@ -504,6 +508,28 @@ def append_to_file(filename, line):
 
 def main():
     margs = args.parse_args()
+
+    margs.device = "mps"
+    margs.n_head  = 12
+    margs.n_layer = 12
+    margs.n_embd= 768
+    margs.d_dropout= 0.1
+    margs.dropout= 0.1
+    margs.lr_start= 3e-5
+    margs.num_workers= 2
+    margs.max_epochs= 2  #500
+    margs.num_feats= 32 #\
+    margs.seed_path='./data/Pretrained MoLFormer/checkpoints/N-Step-Checkpoint_3_30000.ckpt'
+    margs.dataset_name="bbbp"
+    margs.data_root="./data/bbbp"
+    margs.measure_name="p_np"
+    margs.dims=[768, 768, 768, 1]
+    margs.checkpoints_folder='./checkpoints_bbbp'
+    margs.num_classes=2
+    margs.train_dataset_length = 5
+    margs.eval_dataset_length = 5
+
+
     print("Using " + str(
         torch.cuda.device_count()) + " GPUs---------------------------------------------------------------------")
     pos_emb_type = 'rot'
@@ -563,7 +589,8 @@ def main():
         model = LightningModule(margs, tokenizer)
     else:
         print("# loaded pre-trained model from {args.seed_path}")
-        model = LightningModule(margs, tokenizer).load_from_checkpoint(margs.seed_path, strict=False, config=margs, tokenizer=tokenizer, vocab=len(tokenizer.vocab))
+        model = LightningModule(margs, tokenizer).load_from_checkpoint(margs.seed_path, strict=False, config=margs,
+                                                                       tokenizer=tokenizer, vocab=len(tokenizer.vocab))
 
 
     last_checkpoint_file = os.path.join(checkpoint_dir, "last.ckpt")
@@ -577,7 +604,7 @@ def main():
     trainer = pl.Trainer(
         max_epochs=margs.max_epochs,
         default_root_dir=checkpoint_root,
-        gpus=1,
+        gpus=1 if torch.cuda.is_available() else 0,
         logger=logger,
         resume_from_checkpoint=resume_from_checkpoint,
         checkpoint_callback=checkpoint_callback,
