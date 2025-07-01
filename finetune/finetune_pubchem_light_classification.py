@@ -14,7 +14,7 @@ from fast_transformers.masking import LengthMask as LM
 from rotate_attention.rotate_builder import RotateEncoderBuilder as rotate_builder
 from fast_transformers.feature_maps import GeneralizedRandomFeatures
 from functools import partial
-from apex import optimizers
+# from apex import optimizers
 import subprocess
 from argparse import ArgumentParser, Namespace
 import numpy as np
@@ -23,6 +23,7 @@ from scipy.stats import pearsonr
 from sklearn.metrics import r2_score
 from sklearn.metrics import accuracy_score, roc_curve, auc
 from torch.utils.data import DataLoader
+from torch.optim import AdamW
 from rdkit import Chem
 #from pytorch_lightning.plugins.ddp_plugin import DDPPlugin
 #from pytorch_lightning.plugins.sharded_plugin import DDPShardedPlugin
@@ -220,7 +221,8 @@ class LightningModule(pl.LightningModule):
             betas = (0.9, 0.99)
         print('betas are {}'.format(betas))
         learning_rate = self.train_config.lr_start * self.train_config.lr_multiplier
-        optimizer = optimizers.FusedLAMB(optim_groups, lr=learning_rate, betas=betas)
+        # optimizer = optimizers.FusedLAMB(optim_groups, lr=learning_rate, betas=betas)
+        optimizer = AdamW(optim_groups, lr=learning_rate, betas=betas)
         return optimizer
 
     def training_step(self, batch, batch_idx):
